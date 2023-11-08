@@ -3,6 +3,7 @@ using PaymentContext.Shared.Entities;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using System.Diagnostics.Contracts;
 
 namespace PaymentContext.Domain.Entities
 {
@@ -16,7 +17,7 @@ namespace PaymentContext.Domain.Entities
             Email = email;
             _subscriptions = new List<Subscription>();
 
-            AddNotifications(name, document, email);
+            AddNotification(name, document, email);
 
         }
 
@@ -27,12 +28,16 @@ namespace PaymentContext.Domain.Entities
         public IReadOnlyCollection<Subscription> Subscriptions { get { return _subscriptions.ToArray(); } }
         public void AddSubscription(Subscription subscription)
         {
-            //Cancela todas as outras assinaturas, e coloca
-            //esta como principal
-            foreach (var sub in Subscriptions)
-                sub.Inactivate();
+            var hasSubscriptionActive = false;
+            foreach (var sub in _subscriptions)
+            {
+                if (sub.Active)
+                    hasSubscriptionActive = true;
+            }
 
-            _subscriptions.Add(subscription);
+            AddNotifications(new Contract()
+                .Requires()
+                .IsFalse(hasSubscriptionActive, "Student.Subcriptions", "Você já tem uma assinatura ativa"));
         }
 
 
